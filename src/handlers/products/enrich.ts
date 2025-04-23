@@ -5,13 +5,14 @@ import { createPromptFromProduct } from "../../utils/promptBuilder";
 import { formatAttributesFromResponse } from "../../utils/responseParser";
 import utils from "../../utils";
 import { retrieveUserId } from "../../services/UserService";
+import Product from "../../models/Product";
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     const userId = retrieveUserId(event);
 
     const productIds = JSON.parse(event.body || "[]");
-    const products = 
+    const products = await Product.find({ _id: productIds });
     const enriched = await Promise.all(
       products.map(async (product) => {
         const prompt = createPromptFromProduct(product);

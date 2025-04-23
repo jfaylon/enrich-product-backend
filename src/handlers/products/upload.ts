@@ -7,6 +7,7 @@ import Product from "../../models/Product";
 import { retrieveUserId } from "../../services/UserService";
 import { consumeStream } from "../../utils";
 import { UploadedFile } from "../../interfaces";
+import { promisify } from "util";
 
 const parseCSV = (csvBuffer: Buffer, userId: string) => {
   return new Promise((resolve, reject) => {
@@ -45,7 +46,7 @@ const parseXLSX = async (xlsxBuffer: Buffer, userId: string) => {
         row.eachCell((cell, col) => (headers[col] = cell.text.trim()));
         continue;
       }
-
+      console.log(row);
       const data: Record<string, string> = {};
       row.eachCell((cell, col) => (data[headers[col]] = cell.text.trim()));
       rowStream.push(data);
@@ -53,8 +54,13 @@ const parseXLSX = async (xlsxBuffer: Buffer, userId: string) => {
   }
 
   rowStream.push(null);
+  const pipelineAsync = promisify(pipeline);
 
-  await pipeline(rowStream, processRow(userId, counter), consumeStream);
+  await pipelineAsync(
+    rowStream,
+    processRow(userId, counter),
+    consumeStream,
+  );
   return { counter: counter.count };
 };
 
@@ -69,7 +75,7 @@ const processRow = (userId: string, counter: { count: number }) => {
         barcode: data["Barcode"],
         userId,
       });
-      // await product.save();
+      //await product.save();
       console.log(product);
       counter.count++;
       return callback(null, product);
@@ -150,16 +156,17 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   bufferStream.pipe(form); // Pipe the raw body to busboy
 
   try {
-    const csvData = await fileParsePromise;
+    const countData = await fileParsePromise;
     // Return parsed CSV data as response
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: "File uploaded and CSV processed successfully",
-        data: csvData,
+        message: "File uploaded and processed successfully",
+        data: countData,
       }),
     };
   } catch (err) {
+    console.log(err);
     return {
       statusCode: 500,
       body: JSON.stringify({
