@@ -1,0 +1,41 @@
+{
+  "name": "enrich-product-backend",
+  "version": "1.0.0",
+  "main": "serverless.ts",
+  "scripts": {
+    "dev": "nodemon --exec sls offline start",
+    "test": "jest",
+    "migrate:new": "ts-node mongo-migrate-ts/cli.ts new -n",
+    "migrate:up": "ts-node mongo-migrate-ts/cli.ts up"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@serverless/typescript": "^4.11.1",
+    "@types/aws-lambda": "^8.10.149",
+    "@types/busboy": "^1.5.4",
+    "@types/node": "^22.14.1",
+    "nodemon": "^3.1.9",
+    "serverless": "^3.40.0",
+    "serverless-offline": "^13.3.2",
+    "serverless-plugin-typescript": "^2.1.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@qdrant/js-client-rest": "^1.13.0",
+    "aws-lambda": "^1.0.7",
+    "axios": "^1.8.4",
+    "busboy": "^1.6.0",
+    "csv-parser": "^3.2.0",
+    "dotenv": "^16.5.0",
+    "exceljs": "^4.4.0",
+    "mongo-migrate-ts": "^1.6.2",
+    "mongoose": "^8.13.2",
+    "ollama": "^0.5.15",
+    "pino": "^9.6.0",
+    "pino-pretty": "^13.0.0",
+    "sharp": "^0.34.1"
+  }
+}

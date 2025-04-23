@@ -1,0 +1,89 @@
+// EmbedAndSaveStream.ts
+import { Transform } from "stream";
+import ollama from "ollama";
+import ReferenceProduct, {
+  ReferenceProduct as ReferenceProductInterface,
+} from "../models/ReferenceProduct"; // Your Mongoose model
+import Utils from "./index";
+import { productMappers } from "../mappers";
+import { upsertManyToQdrant } from "../services/QdrantService";
+import { Types } from "mongoose";
+
+// Define the transform stream for embedding and saving
+
+const BATCH_SIZE = 50;
+let batch: Partial<ReferenceProductInterface>[] = [];
+
+export const embedAndSaveStream = (categories: Record<string, string>) => {
+  return new Transform({
+    objectMode: true,
+    async transform(data, encoding, callback) {
+      try {
+        const source = Utils.getSource(data);
+        const mapper = productMappers[source];
+        const mappedData = mapper(data, categories);
+        if (!mappedData.name) {
+          logger.warn(`No name found. Skipping.. ${mappedData.externalId}`);
+          return callback(null, data);
+        }
+
+        const prompt = `${mappedData.name} ${mappedData.categories?.join(
+          " "
+        )} ${mappedData.brand?.join(" ")} ${mappedData.externalId}`;
+        const response = await Utils.retry(() =>
+          ollama.embeddings({
+            model: "nomic-embed-text",
+            prompt: prompt,
+          })
+        );
+        const embedding = response.embedding; // Get the embedding for the product
+
+        // // Save to MongoDB
+        const _id = new Types.ObjectId();
+        batch.push({
+          _id,
+          ...mappedData,
+          embedding,
+        });
+        // const savedReferenceProduct = await referenceProduct.save();
+        // await upsertVector(randomUUID(), embedding, {
+        //   mongoId: savedReferenceProduct._id.toString(),
+        //   externalId: savedReferenceProduct.externalId,
+        //   name: savedReferenceProduct.name,
+        // });
+        if (batch.length >= BATCH_SIZE) {
+          await saveBatch(batch);
+          batch = [];
+        }
+        logger.info(`Saved: ${mappedData.externalId}`);
+
+        // Push the transformed data (product) to the next step in the pipeline
+        return callback(null, data); // You can also pass the modified data if needed for later steps
+      } catch (error) {
+        logger.error(error);
+        logger.error(`Error processing ${data}:`, error);
+        callback(error as Error); // In case of error, we should pass it to the callback to handle backpressure
+      }
+    },
+    async flush(callback) {
+      try {
+        if (batch.length > 0) {
+          await saveBatch(batch);
+          batch = [];
+        }
+        logger.info("Triggered flush");
+        return callback();
+      } catch (err) {
+        return callback(err as Error);
+      }
+    },
+  });
+};
+
+const saveBatch = async (products: Partial<ReferenceProductInterface>[]) => {
+  await Promise.all([
+    ReferenceProduct.insertMany(products, { ordered: false }),
+    upsertManyToQdrant(products),
+  ]);
+  logger.info("Triggered batch upload");
+};
