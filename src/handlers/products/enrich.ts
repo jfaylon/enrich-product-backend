@@ -1,44 +1,50 @@
 import { APIGatewayProxyHandler } from "aws-lambda";
 import "../../utils/bootstrap";
-import llm from "../../llms";
-import { createPromptFromProduct } from "../../utils/promptBuilder";
-import { formatAttributesFromResponse } from "../../utils/responseParser";
-import utils from "../../utils";
 import { retrieveUserId } from "../../services/UserService";
 import Product from "../../models/Product";
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
+import Attribute from "../../models/Attribute";
+import { EnrichProductMessagePayload } from "../../interfaces";
+const ENRICHMENT_QUEUE_URL = process.env.ENRICHMENT_QUEUE_URL;
+
+const sqs = new SQSClient({ region: "ap-southeast-1" }); // Match your config
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     const userId = retrieveUserId(event);
 
-    const productIds = JSON.parse(event.body || "[]");
-    const products = await Product.find({ _id: productIds });
-    const enriched = await Promise.all(
+    const requestBody = JSON.parse(event.body || "[]");
+    const { productIds } = requestBody;
+    console.log(productIds);
+    const attributes = await Attribute.find({ userId }).lean();
+    if (!attributes.length) {
+      throw new Error("No attributes to enrich. Please create an attribute");
+    }
+
+    const products = await Product.find({ _id: productIds, userId }).lean();
+    await Promise.all(
       products.map(async (product) => {
-        const prompt = createPromptFromProduct(product);
-        const llmResponse = await llm("ollama").generate({
-          model: "llava",
-          prompt,
-          images:
-            product.images && product.images.length > 0
-              ? product.images
-              : undefined,
-        });
-        const attributes = formatAttributesFromResponse(llmResponse.output);
-        return {
-          ...product,
+        const payload: EnrichProductMessagePayload = {
+          product,
           attributes,
         };
+        const command = new SendMessageCommand({
+          QueueUrl: ENRICHMENT_QUEUE_URL,
+          MessageBody: JSON.stringify(payload),
+        });
+
+        try {
+          const result = await sqs.send(command);
+          console.log("Message sent to SQS", result.MessageId);
+        } catch (err) {
+          console.error("Failed to send message to SQS", err);
+          throw err;
+        }
       })
     );
-
     return {
       statusCode: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Content-Disposition": `attachment; filename=enriched-products.json`,
-      },
-      body: JSON.stringify(enriched, null, 2),
+      body: "",
     };
   } catch (err) {
     console.error("Enrichment failed:", err);

@@ -76,6 +76,7 @@ export const searchSimilarVectors = async (
   const searchParams: any = {
     vector,
     limit,
+    score_threshold: 0.75,
   };
 
   if (filter) {

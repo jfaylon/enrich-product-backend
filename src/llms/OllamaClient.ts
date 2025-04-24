@@ -52,6 +52,15 @@ const OllamaClient: LLMClient = {
 
     throw new Error("Either prompt or messages must be provided.");
   },
+  embed: async (input: string): Promise<number[]> => {
+    const response = await utils.retry(() =>
+      ollama.embeddings({
+        model: "nomic-embed-text",
+        prompt: input,
+      })
+    );
+    return response.embedding;
+  },
 };
 
 export default OllamaClient;

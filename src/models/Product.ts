@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import { model, Schema, Document } from "mongoose";
 
 interface Measure {
   value: number;
@@ -7,7 +7,7 @@ interface Measure {
 
 type AttributeValue = string | number | string[] | Measure;
 
-interface Product extends Document {
+export interface ProductDocument extends Document {
   userId: string;
   name: string;
   brand?: string;
@@ -30,4 +30,4 @@ const ProductSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-export default mongoose.model<Product>("Product", ProductSchema);
+export default model("Product", ProductSchema);

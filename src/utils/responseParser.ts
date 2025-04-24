@@ -1,5 +1,6 @@
 export const formatAttributesFromResponse = (responseText: string) => {
   try {
+    console.log(responseText);
     const jsonStart = responseText.indexOf("{");
     const jsonEnd = responseText.lastIndexOf("}");
     const json = responseText.slice(jsonStart, jsonEnd + 1);

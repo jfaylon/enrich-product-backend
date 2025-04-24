@@ -1,3 +1,6 @@
+import { AttributeDocument } from "../models/Attribute";
+import { ProductDocument } from "../models/Product";
+
 interface SourceInterfaces {
   asin?: string; // amazon
   title?: string; // amazon
@@ -24,7 +27,10 @@ export interface GenerateResult {
   output: string;
 }
 
-export interface EnrichProductRequest {}
+export interface EnrichProductMessagePayload {
+  product: Partial<ProductDocument>;
+  attributes: Partial<AttributeDocument>[];
+}
 
 export interface UploadedFile {
   fieldname: string;
@@ -35,6 +41,7 @@ export interface UploadedFile {
 
 interface LLMClient {
   generate: (options: GenerateOptions) => Promise<GenerateResult>;
+  embed: (input: string) => Promise<number[]>;
 }
 
 export type { SourceInterfaces, LLMClient };

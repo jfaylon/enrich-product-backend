@@ -1,14 +1,13 @@
 import { Schema, model, Document, Types } from "mongoose";
 
 export interface ReferenceProduct extends Document {
-  _id: Types.ObjectId;
-  source?: string; // e.g., 'openfoodfacts', 'amazon', 'custom'
-  externalId?: string;
+  source?: string | null; // e.g., 'openfoodfacts', 'amazon', 'custom'
+  externalId?: string | null;
   name: string;
   brand?: string[];
-  description?: string;
-  imageUrl?: string;
-  productUrl?: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  productUrl?: string | null;
   categories?: string[];
   tags?: string[];
   raw?: unknown; // original raw data (optional but useful for auditing)
@@ -16,7 +15,6 @@ export interface ReferenceProduct extends Document {
 }
 
 const ReferenceProductSchema = new Schema({
-  _id: { type: Schema.Types.ObjectId, auto: true },
   source: { type: String }, // e.g. "openfoodfacts"
   externalId: { type: String, index: true }, // e.g. barcode or ASIN
   name: { type: String, required: true, index: true },

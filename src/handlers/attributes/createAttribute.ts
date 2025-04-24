@@ -1,11 +1,16 @@
 import { APIGatewayProxyHandler } from "aws-lambda";
 import Attribute from "../../models/Attribute";
 import "../../utils/bootstrap";
+import { retrieveUserId } from "../../services/UserService";
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
+    const userId = retrieveUserId(event);
     const data = JSON.parse(event.body || "{}");
-    const attribute = await Attribute.create(data);
+    const attribute = await Attribute.create({
+      ...data,
+      userId,
+    });
     return {
       statusCode: 200,
       body: JSON.stringify(attribute),

@@ -8,13 +8,13 @@ import { retrieveUserId } from "../../services/UserService";
 import { consumeStream } from "../../utils";
 import { UploadedFile } from "../../interfaces";
 import { promisify } from "util";
+import "../../utils/bootstrap";
 
-const parseCSV = (csvBuffer: Buffer, userId: string) => {
+const parseCSV = (csvStream: Readable, userId: string) => {
   return new Promise((resolve, reject) => {
     const counter = { count: 0 };
-    const readableStream = Readable.from(csvBuffer); // Convert buffer to readable stream
     pipeline(
-      readableStream,
+      csvStream,
       csv(), // Parse the CSV file
       processRow(userId, counter), // Process each row
       consumeStream, // Final writable stream to consume the data
@@ -29,15 +29,11 @@ const parseCSV = (csvBuffer: Buffer, userId: string) => {
   });
 };
 
-const parseXLSX = async (xlsxBuffer: Buffer, userId: string) => {
+const parseXLSX = async (xlsxStream: Readable, userId: string) => {
   const counter = { count: 0 };
   const rowStream = new Readable({ objectMode: true, read() {} });
 
-  const inputStream = Readable.from(xlsxBuffer);
-  const workbookReader = new exceljs.stream.xlsx.WorkbookReader(
-    inputStream,
-    {}
-  );
+  const workbookReader = new exceljs.stream.xlsx.WorkbookReader(xlsxStream, {});
 
   for await (const worksheet of workbookReader) {
     let headers: Record<number, string> = {};
@@ -46,7 +42,6 @@ const parseXLSX = async (xlsxBuffer: Buffer, userId: string) => {
         row.eachCell((cell, col) => (headers[col] = cell.text.trim()));
         continue;
       }
-      console.log(row);
       const data: Record<string, string> = {};
       row.eachCell((cell, col) => (data[headers[col]] = cell.text.trim()));
       rowStream.push(data);
@@ -56,11 +51,7 @@ const parseXLSX = async (xlsxBuffer: Buffer, userId: string) => {
   rowStream.push(null);
   const pipelineAsync = promisify(pipeline);
 
-  await pipelineAsync(
-    rowStream,
-    processRow(userId, counter),
-    consumeStream,
-  );
+  await pipelineAsync(rowStream, processRow(userId, counter), consumeStream);
   return { counter: counter.count };
 };
 
@@ -68,6 +59,7 @@ const processRow = (userId: string, counter: { count: number }) => {
   return new Transform({
     objectMode: true,
     async transform(data, encoding, callback) {
+      console.log(data);
       const product = new Product({
         name: data["Product Name"],
         brand: data["Brand"],
@@ -75,8 +67,8 @@ const processRow = (userId: string, counter: { count: number }) => {
         barcode: data["Barcode"],
         userId,
       });
-      //await product.save();
       console.log(product);
+      await product.save();
       counter.count++;
       return callback(null, product);
     },
@@ -103,48 +95,37 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   const files: UploadedFile[] = []; // To hold the files
 
   const fileParsePromise = new Promise((resolve, reject) => {
-    form.on("file", (fieldname: string, file: Readable, fileInfo) => {
-      const chunks: Buffer[] = [];
-      file.on("data", (chunk: Buffer) => chunks.push(chunk));
-      file.on("end", () => {
-        // Once the file is completely uploaded, process it
-        const fileBuffer = Buffer.concat(chunks);
-        files.push({
-          fieldname,
-          filename: fileInfo.filename,
-          fileBuffer,
-          mimeType: fileInfo.mimeType,
-        });
-      });
-    });
-
-    form.on("finish", async () => {
-      // Parse the CSV once the file is uploaded
+    let hasUploadedFile = false;
+    form.on("file", async (fieldname: string, file: Readable, fileInfo) => {
       try {
-        if (files.length > 0) {
-          const mimeType = files[0].mimeType;
-          const filename = files[0].fieldname;
-          if (mimeType === "text/csv") {
-            const processedCount = await parseCSV(files[0].fileBuffer, userId);
-            resolve(processedCount);
-          } else if (
-            mimeType ===
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-            filename.endsWith(".xlsx")
-          ) {
-            const processedCount = await parseXLSX(files[0].fileBuffer, userId);
-            resolve(processedCount);
-          } else {
-            reject(new Error("Invalid file uploaded"));
-          }
+        const mimeType = fileInfo.mimeType;
+        const filename = fileInfo.filename;
+
+        if (mimeType === "text/csv") {
+          const processedCount = await parseCSV(file, userId);
+          hasUploadedFile = true;
+          resolve(processedCount);
+        } else if (
+          mimeType ===
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+          filename.endsWith(".xlsx")
+        ) {
+          const processedCount = await parseXLSX(file, userId);
+          hasUploadedFile = true;
+          resolve(processedCount);
         } else {
-          reject(new Error("No file uploaded"));
+          reject(new Error("Invalid file uploaded"));
         }
       } catch (err) {
         reject(err);
       }
     });
 
+    form.on("end", () => {
+      if (!hasUploadedFile) {
+        reject(new Error("No file uploaded"));
+      }
+    });
     form.on("error", (err) => reject(err));
   });
 
