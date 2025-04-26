@@ -29,31 +29,31 @@ const serverlessConfiguration: AWS = {
   functions: {
     upload: {
       handler: "src/handlers/products/upload.handler",
-      events: [{ http: { method: "post", path: "products" } }],
+      events: [{ httpApi: { method: "post", path: "/products" } }],
       timeout: 120,
     },
     enrich: {
       handler: "src/handlers/products/enrich.handler",
-      events: [{ http: { method: "post", path: "products/enrich" } }],
+      events: [{ httpApi: { method: "post", path: "/products/enrich" } }],
       timeout: 120,
     },
     listProducts: {
       handler: "src/handlers/products/list.handler",
-      events: [{ http: { method: "get", path: "products" } }],
+      events: [{ httpApi: { method: "get", path: "/products" } }],
       timeout: 120,
     },
     getAttributes: {
       handler: "src/handlers/attributes/getAttributes.handler",
-      events: [{ http: { method: "get", path: "attributes" } }],
+      events: [{ httpApi: { method: "get", path: "/attributes" } }],
     },
     createAttribute: {
       handler: "src/handlers/attributes/createAttribute.handler",
-      events: [{ http: { method: "post", path: "attributes" } }],
+      events: [{ httpApi: { method: "post", path: "/attributes" } }],
       timeout: 120,
     },
     deleteAttribute: {
       handler: "src/handlers/attributes/deleteAttribute.handler",
-      events: [{ http: { method: "delete", path: "attributes" } }],
+      events: [{ httpApi: { method: "delete", path: "/attributes" } }],
       timeout: 120,
     },
     enrichmentProcessor: {

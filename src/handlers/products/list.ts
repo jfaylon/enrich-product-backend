@@ -10,9 +10,15 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       limit = 10,
       sortField = "_id",
       sortOrder = "asc",
-      filter = "{}",
+      ...filter
     } = event.queryStringParameters || {};
-    const parsedFilter = filter ? JSON.parse(filter) : {};
+    const parsedFilter: Record<string, string | undefined> = {};
+
+    for (const key in filter) {
+      if (!["page", "limit", "sortField", "sortOrder"].includes(key)) {
+        parsedFilter[key] = filter[key];
+      }
+    }
     const sortOrderNum = sortOrder === "desc" ? -1 : 1;
     const sort: Record<string, SortOrder> = {
       _id: sortOrderNum, // Primary sort by _id

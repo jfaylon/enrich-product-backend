@@ -26,6 +26,11 @@ const ProductSchema: Schema = new Schema(
     barcode: { type: String },
     images: [String],
     attributes: { type: Schema.Types.Mixed, default: {} },
+    enrichmentStatus: {
+      type: String,
+      enum: ["not_started", "pending", "completed"], // add processing if necessary
+      default: "not_started",
+    },
   },
   { timestamps: true }
 );

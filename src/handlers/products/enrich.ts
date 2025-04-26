@@ -1,7 +1,7 @@
 import { APIGatewayProxyHandler } from "aws-lambda";
 import "../../utils/bootstrap";
 import { retrieveUserId } from "../../services/UserService";
-import Product from "../../models/Product";
+import Product, { ProductDocument } from "../../models/Product";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import Attribute from "../../models/Attribute";
 import { EnrichProductMessagePayload } from "../../interfaces";
@@ -21,11 +21,11 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       throw new Error("No attributes to enrich. Please create an attribute");
     }
 
-    const products = await Product.find({ _id: productIds, userId }).lean();
+    const products = await Product.find({ _id: productIds, userId });
     await Promise.all(
       products.map(async (product) => {
         const payload: EnrichProductMessagePayload = {
-          product,
+          product: product.toObject(),
           attributes,
         };
         const command = new SendMessageCommand({
@@ -35,6 +35,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
         try {
           const result = await sqs.send(command);
+          product.enrichmentStatus = "pending";
+          await product.save();
           console.log("Message sent to SQS", result.MessageId);
         } catch (err) {
           console.error("Failed to send message to SQS", err);

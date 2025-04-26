@@ -33,7 +33,6 @@ export const handler = async (event: SQSEvent): Promise<void> => {
         similarProducts,
         targetAttributes: attributes,
       });
-      console.log(prompt);
       const llmResponse = await llm("ollama").generate({
         model: "llava",
         prompt,
@@ -47,7 +46,7 @@ export const handler = async (event: SQSEvent): Promise<void> => {
       );
 
       const currentProduct = await Product.findByIdAndUpdate(product._id, {
-        $set: { attributes: attributesResponse },
+        $set: { attributes: attributesResponse, enrichmentStatus: "completed" },
       });
 
       console.log(currentProduct);
