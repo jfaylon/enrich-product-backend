@@ -44,9 +44,11 @@ export const handler = async (event: SQSEvent): Promise<void> => {
       const attributesResponse = formatAttributesFromResponse(
         llmResponse.output
       );
-
       const currentProduct = await Product.findByIdAndUpdate(product._id, {
-        $set: { attributes: attributesResponse, enrichmentStatus: "completed" },
+        $set: {
+          attributes: attributesResponse,
+          enrichmentStatus: "completed",
+        },
       });
 
       console.log(currentProduct);

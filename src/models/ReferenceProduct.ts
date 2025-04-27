@@ -16,7 +16,7 @@ export interface ReferenceProduct extends Document {
 
 const ReferenceProductSchema = new Schema({
   source: { type: String }, // e.g. "openfoodfacts"
-  externalId: { type: String, index: true }, // e.g. barcode or ASIN
+  externalId: { type: String }, // e.g. barcode or ASIN
   name: { type: String, required: true, index: true },
   brand: { type: [String] },
   description: { type: String },
@@ -31,6 +31,9 @@ const ReferenceProductSchema = new Schema({
   },
 });
 
-ReferenceProductSchema.index({ externalId: 1, source: 1 }, { unique: true });
+ReferenceProductSchema.index(
+  { externalId: 1, name: 1, source: 1 },
+  { unique: true }
+);
 
 export default model("ReferenceProduct", ReferenceProductSchema);

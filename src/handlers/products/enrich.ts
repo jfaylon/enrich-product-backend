@@ -1,7 +1,7 @@
-import { APIGatewayProxyHandler } from "aws-lambda";
+import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import "../../utils/bootstrap";
 import { retrieveUserId } from "../../services/UserService";
-import Product, { ProductDocument } from "../../models/Product";
+import Product from "../../models/Product";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import Attribute from "../../models/Attribute";
 import { EnrichProductMessagePayload } from "../../interfaces";
@@ -9,11 +9,11 @@ const ENRICHMENT_QUEUE_URL = process.env.ENRICHMENT_QUEUE_URL;
 
 const sqs = new SQSClient({ region: "ap-southeast-1" }); // Match your config
 
-export const handler: APIGatewayProxyHandler = async (event) => {
+export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
     const userId = retrieveUserId(event);
 
-    const requestBody = JSON.parse(event.body || "[]");
+    const requestBody = JSON.parse(event.body || "{}");
     const { productIds } = requestBody;
     console.log(productIds);
     const attributes = await Attribute.find({ userId }).lean();

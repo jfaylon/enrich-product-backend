@@ -30,7 +30,7 @@ const serverlessConfiguration: AWS = {
     upload: {
       handler: "src/handlers/products/upload.handler",
       events: [{ httpApi: { method: "post", path: "/products" } }],
-      timeout: 120,
+      timeout: 900,
     },
     enrich: {
       handler: "src/handlers/products/enrich.handler",
@@ -40,6 +40,11 @@ const serverlessConfiguration: AWS = {
     listProducts: {
       handler: "src/handlers/products/list.handler",
       events: [{ httpApi: { method: "get", path: "/products" } }],
+      timeout: 120,
+    },
+    deleteProducts: {
+      handler: "src/handlers/products/delete.handler",
+      events: [{ httpApi: { method: "delete", path: "/products" } }],
       timeout: 120,
     },
     getAttributes: {
@@ -53,7 +58,9 @@ const serverlessConfiguration: AWS = {
     },
     deleteAttribute: {
       handler: "src/handlers/attributes/deleteAttribute.handler",
-      events: [{ httpApi: { method: "delete", path: "/attributes" } }],
+      events: [
+        { httpApi: { method: "delete", path: "/attributes/{attributeId}" } },
+      ],
       timeout: 120,
     },
     enrichmentProcessor: {

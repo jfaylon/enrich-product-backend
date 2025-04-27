@@ -1,4 +1,4 @@
-import { APIGatewayProxyHandler } from "aws-lambda";
+import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import busboy from "busboy";
 import { pipeline, Readable, Transform } from "stream"; // To create a readable stream from a buffer
 import csv from "csv-parser";
@@ -9,15 +9,20 @@ import { consumeStream } from "../../utils";
 import { UploadedFile } from "../../interfaces";
 import { promisify } from "util";
 import "../../utils/bootstrap";
+import mongoose, { ClientSession } from "mongoose";
 
-const parseCSV = (csvStream: Readable, userId: string) => {
+const parseCSV = (
+  csvStream: Readable,
+  userId: string,
+  session: ClientSession
+): Promise<Record<string, number>> => {
   return new Promise((resolve, reject) => {
     const counter = { count: 0 };
     pipeline(
       csvStream,
       csv(), // Parse the CSV file
-      processRow(userId, counter), // Process each row
-      consumeStream, // Final writable stream to consume the data
+      processRow(userId, counter, session), // Process each row
+      consumeStream(), // Final writable stream to consume the data
       (err) => {
         if (err) {
           reject(err); // If any stream in the pipeline fails, reject the promise
@@ -29,7 +34,11 @@ const parseCSV = (csvStream: Readable, userId: string) => {
   });
 };
 
-const parseXLSX = async (xlsxStream: Readable, userId: string) => {
+const parseXLSX = async (
+  xlsxStream: Readable,
+  userId: string,
+  session: ClientSession
+) => {
   const counter = { count: 0 };
   const rowStream = new Readable({ objectMode: true, read() {} });
 
@@ -51,73 +60,88 @@ const parseXLSX = async (xlsxStream: Readable, userId: string) => {
   rowStream.push(null);
   const pipelineAsync = promisify(pipeline);
 
-  await pipelineAsync(rowStream, processRow(userId, counter), consumeStream);
+  await pipelineAsync(
+    rowStream,
+    processRow(userId, counter, session),
+    consumeStream()
+  );
   return { counter: counter.count };
 };
 
-const processRow = (userId: string, counter: { count: number }) => {
+const processRow = (
+  userId: string,
+  counter: { count: number },
+  session: ClientSession
+) => {
   return new Transform({
     objectMode: true,
     async transform(data, encoding, callback) {
-      console.log(data);
-      const product = new Product({
-        name: data["Product Name"],
-        brand: data["Brand"],
-        images: data["Images"]?.split(",") || [],
-        barcode: data["Barcode"],
-        userId,
-      });
-      console.log(product);
-      await product.save();
-      counter.count++;
-      return callback(null, product);
+      try {
+        const product = new Product({
+          name: data["Product Name"],
+          brand: data["Brand"],
+          images: data["Images"]?.split(",") || [],
+          barcode: data["Barcode"],
+          userId,
+        });
+        console.log(product);
+        await product.save({ session });
+        counter.count++;
+        return callback(null, product);
+      } catch (error) {
+        return callback(error as Error);
+      }
     },
   });
 };
 
-export const handler: APIGatewayProxyHandler = async (event) => {
-  // console.log(event);
-
-  // Check if the body is Base64 encoded
+export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   const userId = retrieveUserId(event);
   const body = event.isBase64Encoded
     ? Buffer.from(event.body as string, "base64")
     : event.body;
 
-  // console.log("Decoded Body:", body);
-
-  // console.log("Received Headers:", event.headers);
   // workaround
   event.headers["content-type"] =
     event.headers["content-type"] || event.headers["Content-Type"];
 
   const form = busboy({ headers: event.headers });
-  const files: UploadedFile[] = []; // To hold the files
 
   const fileParsePromise = new Promise((resolve, reject) => {
     let hasUploadedFile = false;
     form.on("file", async (fieldname: string, file: Readable, fileInfo) => {
+      const session = await mongoose.startSession();
+      const parsers: Record<
+        string,
+        (
+          file: Readable,
+          userId: string,
+          session: any
+        ) => Promise<Record<string, number>>
+      > = {
+        "text/csv": parseCSV,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+          parseXLSX,
+      };
       try {
         const mimeType = fileInfo.mimeType;
         const filename = fileInfo.filename;
-
-        if (mimeType === "text/csv") {
-          const processedCount = await parseCSV(file, userId);
-          hasUploadedFile = true;
-          resolve(processedCount);
-        } else if (
-          mimeType ===
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-          filename.endsWith(".xlsx")
-        ) {
-          const processedCount = await parseXLSX(file, userId);
-          hasUploadedFile = true;
-          resolve(processedCount);
-        } else {
-          reject(new Error("Invalid file uploaded"));
+        await session.startTransaction();
+        const parser =
+          parsers[mimeType] ||
+          (filename.endsWith(".xlsx") ? parseXLSX : undefined);
+        if (!parser) {
+          throw new Error("Invalid file uploaded");
         }
+        const processedCount = await parser(file, userId, session);
+        hasUploadedFile = true;
+        await session.commitTransaction();
+        resolve(processedCount);
       } catch (err) {
+        await session.abortTransaction();
         reject(err);
+      } finally {
+        session.endSession(); // Always a good idea to clean up session
       }
     });
 

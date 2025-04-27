@@ -1,11 +1,12 @@
-import { APIGatewayProxyHandler } from "aws-lambda";
+import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import "../../utils/bootstrap";
 import Attribute from "../../models/Attribute";
+import { retrieveUserId } from "../../services/UserService";
 
-export const deleteAttribute: APIGatewayProxyHandler = async (event) => {
+export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
     const { attributeId } = event.pathParameters || {};
-    const userId = event.requestContext.authorizer?.principalId;
+    const userId = retrieveUserId(event);
 
     if (!attributeId || !userId) {
       return {

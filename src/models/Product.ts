@@ -35,4 +35,9 @@ const ProductSchema: Schema = new Schema(
   { timestamps: true }
 );
 
+ProductSchema.index({ userId: 1, name: 1, brand: 1 }, { unique: true });
+ProductSchema.index({ brand: 1 });
+ProductSchema.index({ barcode: 1 });
+ProductSchema.index({ "attributes.$**": 1 });
+
 export default model("Product", ProductSchema);

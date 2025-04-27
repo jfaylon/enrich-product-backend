@@ -1,6 +1,6 @@
-import { APIGatewayProxyEvent } from "aws-lambda";
+import { APIGatewayProxyEventV2 } from "aws-lambda";
 
-export const retrieveUserId = (event: APIGatewayProxyEvent) => {
+export const retrieveUserId = (event: APIGatewayProxyEventV2) => {
   // #TODO: Modify this if there is user management
-  return event.requestContext?.authorizer?.principalId || "test-user-id";
+  return "test-user-id";
 };

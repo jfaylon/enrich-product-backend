@@ -70,11 +70,11 @@ const buildFieldsFromAttributes = (attributes: AttributeDocument[]): string => {
 
       switch (attr.type) {
         case "short_text":
-          return `- ${label} (short text)`;
+          return `- ${label} (short text less than 50 characters)`;
         case "long_text":
-          return `- ${label} (long text)`;
+          return `- ${label} (long text. Must not be empty)`;
         case "rich_text":
-          return `- ${label} (rich text / HTML formatting allowed)`;
+          return `- ${label} (HTML format. Infer more details if not enough data. Must not be empty)`;
         case "number":
           return `- ${label} (number)`;
         case "single_select":
@@ -86,7 +86,9 @@ const buildFieldsFromAttributes = (attributes: AttributeDocument[]): string => {
             attr.options?.join(", ") || "no options"
           })`;
         case "measure":
-          return `- ${label} (measure in ${attr.unit || "unit"})`;
+          return `- ${label} (measure in ${
+            attr.unit || "unit"
+          }. Number only for value)`;
         default:
           return `- ${label}`;
       }
@@ -108,6 +110,7 @@ const buildJSONResponseFields = (
     "updatedAt",
     "__v",
     "userId",
+    "enrichmentStatus",
   ];
 
   // Base product fields (excluding core ones)
@@ -176,13 +179,33 @@ export const buildProductEnrichmentPrompt = ({
 You are an AI assistant tasked with enriching product details.
 Given the following product information, extract or infer the missing attributes.
 
+Important Rules:
+- If the field is a measure (e.g., weight, width, height, warranty), always format it as an object: { "value": number, "unit": string }.
+- The "value" must be a numeric type (e.g., 0.5, 100), NOT a string. If no value found, put 0
+- The "unit" must be a string like "kg", "g", "cm", etc. Use the unit found in fields to enrich.
+- If the input measure is unclear, do your best to infer and separate the number and unit correctly.
+- Do not return values like "0.5 kg" as a string — split into { value: 0.5, unit: "kg" }.
+- When outputting a "measure" field, always output an object containing BOTH value (number) and unit (string). Even if the unit is missing, still include the unit field as an empty string. Example: { \"value\": 42, \"unit\": \"kg\" } or { \"value\": 5, \"unit\": \"\" }. Never omit the unit field. Always use the unit provided.
+- Only respond with a valid JSON object, and nothing else.
+
+Simple Field Extraction Rules:
+- For attributes with short texts as such as color, material, brand, flavor, size, and similar fields, only extract and return the short value (word or phrase).
+- Do not output full sentences, descriptions, or marketing phrases.
+- Examples:
+  - Correct: "green"
+  - Correct: "cotton"
+  - Correct: "Apple"
+  - Incorrect: "The shirt is green."
+  - Incorrect: "Made of high-quality cotton."
+- Always respond with the clean value itself, without extra context.
+
 ### Product Info
 Name: ${product.name}
 Brand: ${product.brand ?? "N/A"}
 Barcode: ${product.barcode ?? "N/A"}
 Image URL(s): ${images}
 
-### Fields to Enrich
+### Fields to Enrich. Follow only the schema proivded
 ${fieldsToEnrich}
 
 ${similarProducts.length > 0 ? `### Similar Products\n${formattedSimilar}` : ""}

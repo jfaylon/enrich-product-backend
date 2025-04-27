@@ -25,7 +25,6 @@ class DatabaseConnectionFactory {
     const url = `${uriArray[0]}/${process.env.MONGODB_DATABASE!}${
       uriArray.length >= 2 ? `?${uriArray[1]}` : ""
     }`;
-
     try {
       await mongoose.connect(url, {
         autoCreate: false,

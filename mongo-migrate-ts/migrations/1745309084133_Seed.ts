@@ -16,42 +16,52 @@ export class Seed1745309084133 implements MigrationInterface {
     await DatabaseConnectionFactory.getDatabaseConnection();
     await initQdrantCollection();
 
-    const loadAmazonCategories = (): Promise<Record<string, string>> => {
-      const categoryMap: Record<string, string> = {};
-
-      return new Promise((resolve, reject) => {
-        fs.createReadStream("./seeds/amazoncategories.csv")
-          .pipe(csv())
-          .on("data", (row) => {
-            const { id, category_name } = row;
-            if (id && category_name) {
-              categoryMap[id] = category_name;
-            }
-          })
-          .on("end", () => resolve(categoryMap))
-          .on("error", (err) => reject(err));
-      });
-    };
-
-    const amazonCategories = await loadAmazonCategories();
-    const amazonStream = fs
-      .createReadStream("./seeds/amazonproducts.csv")
-      .pipe(csv());
-    const foodStream = fs
-      .createReadStream("./seeds/foodproducts.csv.gz")
-      .pipe(zlib.createGunzip())
-      .setEncoding("utf8")
-      .pipe(csv({ separator: "\t" }));
-
-    // Seed both in series
-    await pipeline(
-      amazonStream,
-      embedAndSaveStream(amazonCategories),
-      consumeStream
-    );
     logger.info("Seeded amazonproducts.csv");
 
-    await pipeline(foodStream, embedAndSaveStream({}), consumeStream);
+    const seedAmazonProducts = async () => {
+      const loadAmazonCategories = (): Promise<Record<string, string>> => {
+        const categoryMap: Record<string, string> = {};
+
+        return new Promise((resolve, reject) => {
+          fs.createReadStream("./seeds/amazoncategories.csv")
+            .pipe(csv())
+            .on("data", (row) => {
+              const { id, category_name } = row;
+              if (id && category_name) {
+                categoryMap[id] = category_name;
+              }
+            })
+            .on("end", () => resolve(categoryMap))
+            .on("error", (err) => reject(err));
+        });
+      };
+
+      const amazonCategories = await loadAmazonCategories();
+      const amazonStream = fs
+        .createReadStream("./seeds/amazonproducts.csv")
+        .pipe(csv());
+
+      // Seed both in series
+      await pipeline(
+        amazonStream,
+        embedAndSaveStream(amazonCategories),
+        consumeStream()
+      );
+    };
+
+    const seedFoodProducts = async () => {
+      const foodStream = fs
+        .createReadStream("./seeds/foodproducts.csv.gz")
+        .pipe(zlib.createGunzip())
+        .pipe(csv({ separator: "\t" }));
+
+      await pipeline(foodStream, embedAndSaveStream({}), consumeStream());
+    };
+
+    await seedAmazonProducts();
+    logger.info("Seeded amazonproducts.csv");
+
+    await seedFoodProducts();
     logger.info("Seeded foodproducts.csv.gz");
   }
 

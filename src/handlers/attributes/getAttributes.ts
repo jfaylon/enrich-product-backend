@@ -1,9 +1,9 @@
-import { APIGatewayProxyHandler } from "aws-lambda";
+import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import Attribute from "../../models/Attribute";
 import "../../utils/bootstrap";
 import { retrieveUserId } from "../../services/UserService";
 
-export const handler: APIGatewayProxyHandler = async (event) => {
+export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
     const userId = retrieveUserId(event);
     if (!userId) throw new Error("Missing userId");

@@ -68,14 +68,18 @@ const getBufferDataFromImage = async (
 };
 
 async function fetchImageAsUint8Array(url: string): Promise<Uint8Array> {
-  const response = await axios.get(url, { responseType: "arraybuffer" });
+  try {
+    const response = await axios.get(url, { responseType: "arraybuffer" });
 
-  const resizedBuffer = await sharp(response.data)
-    .resize(384, 384, { fit: "inside" })
-    .toFormat("jpeg", { quality: 75 })
-    .toBuffer();
+    const resizedBuffer = await sharp(response.data)
+      .resize(384, 384, { fit: "inside" })
+      .toFormat("jpeg", { quality: 75 })
+      .toBuffer();
 
-  return new Uint8Array(resizedBuffer);
+    return new Uint8Array(resizedBuffer);
+  } catch (error) {
+    return new Uint8Array();
+  }
 }
 
 async function prepareLlavaChatMessages(prompt: string, imageUrls: string[]) {
@@ -87,20 +91,21 @@ async function prepareLlavaChatMessages(prompt: string, imageUrls: string[]) {
     {
       role: "user",
       content: prompt,
-      images: imageBuffers, // This now matches `Uint8Array[]`
+      images: imageBuffers.filter((buffer) => buffer.length), // This now matches `Uint8Array[]`
     },
   ];
 
   return messages;
 }
 
-export const consumeStream = new Writable({
-  objectMode: true,
-  write(_chunk, _encoding, callback) {
-    // Just consume — no-op
-    callback();
-  },
-});
+export const consumeStream = () =>
+  new Writable({
+    objectMode: true,
+    write(_chunk, _encoding, callback) {
+      // Just consume — no-op
+      callback();
+    },
+  });
 
 export default {
   consumeStream,

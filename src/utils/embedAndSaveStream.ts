@@ -45,12 +45,6 @@ export const embedAndSaveStream = (categories: Record<string, string>) => {
           ...mappedData,
           embedding,
         });
-        // const savedReferenceProduct = await referenceProduct.save();
-        // await upsertVector(randomUUID(), embedding, {
-        //   mongoId: savedReferenceProduct._id.toString(),
-        //   externalId: savedReferenceProduct.externalId,
-        //   name: savedReferenceProduct.name,
-        // });
         if (batch.length >= BATCH_SIZE) {
           await saveBatch(batch);
           batch = [];
@@ -60,8 +54,8 @@ export const embedAndSaveStream = (categories: Record<string, string>) => {
         // Push the transformed data (product) to the next step in the pipeline
         return callback(null, data); // You can also pass the modified data if needed for later steps
       } catch (error) {
-        logger.error(error);
-        logger.error(`Error processing ${data}:`, error);
+        logger.error((error as Error).message);
+        logger.error(`Error processing ${JSON.stringify(data)}:`, error);
         callback(error as Error); // In case of error, we should pass it to the callback to handle backpressure
       }
     },
@@ -81,6 +75,9 @@ export const embedAndSaveStream = (categories: Record<string, string>) => {
 };
 
 const saveBatch = async (products: Partial<ReferenceProductInterface>[]) => {
+  logger.info("executing batch upload");
+  const productIds = products.map((product) => product.externalId);
+  logger.info(productIds);
   await Promise.all([
     ReferenceProduct.insertMany(products, { ordered: false }),
     upsertManyToQdrant(products),
