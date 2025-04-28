@@ -198,7 +198,7 @@ The project adopts a modular serverless-compatible backend design to support hor
 
 ### Local Vector Search vs Managed Solutions
 
-Qdrant was chosen for local vector search to provide full control over vector storage, similarity tuning, and cost optimization, avoiding reliance on managed cloud vector databases during initial development.
+Qdrant was chosen for local vector search to provide full control over vector storage, similarity tuning, and cost optimization, avoiding reliance on managed cloud vector databases during initial development. The downside of this is the data is stored locally and limited by the local system's capacity. For this test, I feel this is sufficient and this can be refactored to support cloud-based solutions
 
 ---
 
