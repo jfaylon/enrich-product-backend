@@ -116,7 +116,7 @@ Edit `.env` with your configuration values.
 10. **Run Migrations and Seed Data:**
 
 ```bash
-npm run migrate up
+npm run migrate:up
 ```
 
 11. **Start the Serverless offline simulation:**
