@@ -266,6 +266,7 @@ This project is licensed under the MIT License.
 - ElasticMQ should be running if testing background enrichment queues locally.
 - This backend is intended to be paired with a frontend (currently in development).
 - Designed for local-first development to reduce reliance on cloud services during early stages.
+- This was run on Node.js 22.6.0. Other versions of Node.js have not been confirmed to be compatible.
 
 ---
 
