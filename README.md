@@ -276,7 +276,8 @@ For the sake of this test and local development efficiency, only 10,000 rows wer
 - Set up system monitoring tools (e.g., Prometheus, Grafana, Sentry) to observe API response times, database operations, and background processing metrics.
 - Finalize Serverless Framework configuration for production-ready cloud deployment (e.g., AWS Lambda, API Gateway).
 - Transition background task queue from ElasticMQ (local) to AWS SQS in production environments.
-- Environment variable configurations
+- Expand the use of environment variables to allow easy customization of backend endpoints, feature toggles, deployment environment flags, and other configurations without requiring codebase changes. This will improve developer experience and production deployment flexibility.
+
 
 ---
 
