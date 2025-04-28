@@ -1,7 +1,7 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import "../../utils/bootstrap";
-import Attribute from "../../models/Attribute";
 import { retrieveUserId } from "../../services/UserService";
+import { deleteAttribute } from "../../services/AttributeService";
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
@@ -15,10 +15,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       };
     }
 
-    await Attribute.deleteOne({ _id: attributeId, userId });
-
-    // Optionally, remove this attribute from all products owned by this user
-    // You can trigger another service or queue that process this cleanup
+    await deleteAttribute(attributeId, userId);
 
     return {
       statusCode: 200,

@@ -1,9 +1,9 @@
-import { ReferenceProduct } from "../models/ReferenceProduct";
+import { ReferenceProductDocument } from "../models/ReferenceProduct";
 
 export function mapAmazonProduct(
   item: any,
   categories: Record<string, string>
-): Partial<ReferenceProduct> {
+): Partial<ReferenceProductDocument> {
   return {
     source: "amazon",
     externalId: item.asin, // ASIN is Amazon's unique identifier for products

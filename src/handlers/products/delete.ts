@@ -1,7 +1,7 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import "../../utils/bootstrap";
-import Product from "../../models/Product";
 import { retrieveUserId } from "../../services/UserService";
+import { deleteProducts } from "../../services/ProductService";
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
@@ -22,10 +22,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       };
     }
 
-    const result = await Product.deleteMany({
-      _id: { $in: productIds },
-      userId,
-    });
+    const result = await deleteProducts(productIds, userId);
 
     return {
       statusCode: 200,
@@ -34,7 +31,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       }),
     };
   } catch (error) {
-    console.error("Bulk Delete Products Error:", error);
+    logger.error("Bulk Delete Products Error:");
+    logger.error(error);
     return {
       statusCode: 500,
       body: JSON.stringify({ message: "Internal server error" }),

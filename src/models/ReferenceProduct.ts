@@ -1,6 +1,6 @@
-import { Schema, model, Document, Types } from "mongoose";
+import { Schema, model, Document } from "mongoose";
 
-export interface ReferenceProduct extends Document {
+export interface ReferenceProductDocument extends Document {
   source?: string | null; // e.g., 'openfoodfacts', 'amazon', 'custom'
   externalId?: string | null;
   name: string;

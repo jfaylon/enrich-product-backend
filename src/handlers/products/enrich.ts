@@ -1,10 +1,10 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import "../../utils/bootstrap";
 import { retrieveUserId } from "../../services/UserService";
-import Product from "../../models/Product";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-import Attribute from "../../models/Attribute";
 import { EnrichProductMessagePayload } from "../../interfaces";
+import { getProductDocuments } from "../../services/ProductService";
+import { getAttributes } from "../../services/AttributeService";
 const ENRICHMENT_QUEUE_URL = process.env.ENRICHMENT_QUEUE_URL;
 
 const sqs = new SQSClient({ region: "ap-southeast-1" }); // Match your config
@@ -15,13 +15,12 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
 
     const requestBody = JSON.parse(event.body || "{}");
     const { productIds } = requestBody;
-    console.log(productIds);
-    const attributes = await Attribute.find({ userId }).lean();
+    const attributes = await getAttributes(userId);
     if (!attributes.length) {
       throw new Error("No attributes to enrich. Please create an attribute");
     }
 
-    const products = await Product.find({ _id: productIds, userId });
+    const products = await getProductDocuments(productIds, userId);
     await Promise.all(
       products.map(async (product) => {
         const payload: EnrichProductMessagePayload = {
@@ -37,9 +36,9 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
           const result = await sqs.send(command);
           product.enrichmentStatus = "pending";
           await product.save();
-          console.log("Message sent to SQS", result.MessageId);
+          logger.info(result.MessageId, "Message sent to SQS");
         } catch (err) {
-          console.error("Failed to send message to SQS", err);
+          logger.error(err, "Failed to send message to SQS");
           throw err;
         }
       })
@@ -49,7 +48,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       body: "",
     };
   } catch (err) {
-    console.error("Enrichment failed:", err);
+    logger.error(err, "Enrichment failed:");
     return {
       statusCode: 500,
       body: JSON.stringify({

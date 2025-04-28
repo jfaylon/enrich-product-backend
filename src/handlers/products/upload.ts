@@ -6,7 +6,6 @@ import exceljs from "exceljs";
 import Product from "../../models/Product";
 import { retrieveUserId } from "../../services/UserService";
 import { consumeStream } from "../../utils";
-import { UploadedFile } from "../../interfaces";
 import { promisify } from "util";
 import "../../utils/bootstrap";
 import mongoose, { ClientSession } from "mongoose";
@@ -84,7 +83,6 @@ const processRow = (
           barcode: data["Barcode"],
           userId,
         });
-        console.log(product);
         await product.save({ session });
         counter.count++;
         return callback(null, product);
@@ -171,7 +169,6 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       }),
     };
   } catch (err) {
-    console.log(err);
     return {
       statusCode: 500,
       body: JSON.stringify({

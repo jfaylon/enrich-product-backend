@@ -1,18 +1,17 @@
 // EmbedAndSaveStream.ts
 import { Transform } from "stream";
 import ollama from "ollama";
-import ReferenceProduct, {
-  ReferenceProduct as ReferenceProductInterface,
-} from "../models/ReferenceProduct"; // Your Mongoose model
+import { ReferenceProductDocument } from "../models/ReferenceProduct";
 import Utils from "./index";
 import { productMappers } from "../mappers";
 import { upsertManyToQdrant } from "../services/QdrantService";
 import { Types } from "mongoose";
+import { insertReferenceProducts } from "../services/ReferenceProductService";
 
 // Define the transform stream for embedding and saving
 
 const BATCH_SIZE = 50;
-let batch: Partial<ReferenceProductInterface>[] = [];
+let batch: Partial<ReferenceProductDocument>[] = [];
 
 export const embedAndSaveStream = (categories: Record<string, string>) => {
   return new Transform({
@@ -74,12 +73,12 @@ export const embedAndSaveStream = (categories: Record<string, string>) => {
   });
 };
 
-const saveBatch = async (products: Partial<ReferenceProductInterface>[]) => {
+const saveBatch = async (products: Partial<ReferenceProductDocument>[]) => {
   logger.info("executing batch upload");
   const productIds = products.map((product) => product.externalId);
   logger.info(productIds);
   await Promise.all([
-    ReferenceProduct.insertMany(products, { ordered: false }),
+    insertReferenceProducts(products),
     upsertManyToQdrant(products),
   ]);
   logger.info("Triggered batch upload");

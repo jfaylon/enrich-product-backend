@@ -1,5 +1,5 @@
 import { AttributeDocument } from "../models/Attribute";
-import { ReferenceProduct } from "../models/ReferenceProduct";
+import { ReferenceProductDocument } from "../models/ReferenceProduct";
 
 type Product = {
   name: string;
@@ -21,7 +21,7 @@ type Product = {
 
 type PromptOptions = {
   product: Product;
-  similarProducts?: ReferenceProduct[];
+  similarProducts?: ReferenceProductDocument[];
   targetAttributes: AttributeDocument[]; // Optional: for custom attributes to enrich
 };
 
@@ -49,7 +49,10 @@ const buildDynamicFields = (product: Product) => {
   return fields;
 };
 
-const formatSimilarProduct = (product: ReferenceProduct, index: number) => {
+const formatSimilarProduct = (
+  product: ReferenceProductDocument,
+  index: number
+) => {
   const fields: (string | null | undefined)[] = [
     `#${index + 1}`,
     `Name: ${product.name}`,

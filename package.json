@@ -4,7 +4,7 @@
   "main": "serverless.ts",
   "scripts": {
     "dev": "nodemon --exec sls offline start",
-    "test": "jest",
+    "test": "jest -runInBand --coverage",
     "migrate:new": "ts-node mongo-migrate-ts/cli.ts new -n",
     "migrate:up": "ts-node mongo-migrate-ts/cli.ts up"
   },
@@ -15,12 +15,16 @@
     "@serverless/typescript": "^4.11.1",
     "@types/aws-lambda": "^8.10.149",
     "@types/busboy": "^1.5.4",
+    "@types/jest": "^29.5.14",
     "@types/node": "^22.14.1",
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.1.4",
     "nodemon": "^3.1.9",
     "serverless": "^3.40.0",
     "serverless-offline": "^13.3.2",
     "serverless-offline-sqs": "^8.0.0",
     "serverless-plugin-typescript": "^2.1.5",
+    "ts-jest": "^29.3.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },

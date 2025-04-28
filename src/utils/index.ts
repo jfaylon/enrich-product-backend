@@ -25,7 +25,7 @@ const retry = async (
         throw error; // If we've exhausted retries, throw the error
       }
       // Delay and try again
-      console.log(`Attempt ${attempt} failed. Retrying in ${delay}ms...`);
+      logger.info(`Attempt ${attempt} failed. Retrying in ${delay}ms...`);
       await new Promise((resolve) => setTimeout(resolve, delay));
       delay *= 2; // Exponential backoff (doubling the delay each time)
     }

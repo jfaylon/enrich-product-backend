@@ -1,32 +1,30 @@
 import { SQSEvent } from "aws-lambda";
 import "../../utils/bootstrap";
-import Product, { ProductDocument } from "../../models/Product";
 import { buildProductEnrichmentPrompt } from "../../utils/promptBuilder";
 import { formatAttributesFromResponse } from "../../utils/responseParser";
 import llm from "../../llms";
-import { QdrantClient } from "@qdrant/js-client-rest";
 import { searchSimilarVectors } from "../../services/QdrantService";
-import ReferenceProduct from "../../models/ReferenceProduct";
+import { updateProductEnrichment } from "../../services/ProductService";
+import { getReferenceProducts } from "../../services/ReferenceProductService";
 
 export const handler = async (event: SQSEvent): Promise<void> => {
   for (const record of event.Records) {
     try {
       const payload = JSON.parse(record.body);
       const { product, attributes } = payload;
-      // get similar products
 
       const embeddingPrompt = `${product.name} ${product.brand || ""} ${
         product.externalId || ""
       }`;
       const embedding = await llm("ollama").embed(embeddingPrompt);
+      
+      // #TODO: Add a factory for choosing which vector search service
       const similarProductVectorData = await searchSimilarVectors(embedding);
-      const similarProductIds = similarProductVectorData.map(
+      const similarProductIds: string[] = similarProductVectorData.map(
         (product) => product.payload?.mongoId
-      );
+      ) as string[];
       const similarProducts = similarProductIds.length
-        ? await ReferenceProduct.find({
-            _id: similarProductIds,
-          })
+        ? await getReferenceProducts(similarProductIds)
         : undefined;
       const prompt = buildProductEnrichmentPrompt({
         product,
@@ -44,28 +42,17 @@ export const handler = async (event: SQSEvent): Promise<void> => {
       const attributesResponse = formatAttributesFromResponse(
         llmResponse.output
       );
-      const currentProduct = await Product.findByIdAndUpdate(product._id, {
-        $set: {
-          attributes: attributesResponse,
-          enrichmentStatus: "completed",
-        },
-      });
 
-      console.log(currentProduct);
-
-      // if (!Array.isArray(productIds) || productIds.length === 0) {
-      //   console.warn("No valid productIds found in the message");
-      //   continue;
-      // }
-
-      // for (const productId of productIds) {
-      //   console.log(`Enriching product: ${productId}`);
-      //   await enrichProduct(productId); // your business logic
-      // }
-
-      console.log("Batch enrichment complete.");
+      const currentProduct = await updateProductEnrichment(
+        product._id,
+        "completed",
+        attributesResponse
+      );
+      logger.info(currentProduct);
+      logger.info("Batch enrichment complete.");
     } catch (error) {
-      console.error("Failed to process message:", error);
+      logger.error("Failed to process message:");
+      logger.error(error);
       throw error; // rethrow so SQS retries the message
     }
   }

@@ -1,6 +1,7 @@
-export const formatAttributesFromResponse = (responseText: string) => {
+export const formatAttributesFromResponse = (
+  responseText: string
+): Record<string, unknown> => {
   try {
-    console.log(responseText);
     const jsonStart = responseText.indexOf("{");
     const jsonEnd = responseText.lastIndexOf("}");
     const json = responseText.slice(jsonStart, jsonEnd + 1);

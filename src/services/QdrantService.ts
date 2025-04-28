@@ -1,12 +1,12 @@
 import { QdrantClient } from "@qdrant/js-client-rest";
-import { ReferenceProduct } from "../models/ReferenceProduct";
+import { ReferenceProductDocument } from "../models/ReferenceProduct";
 import { randomUUID } from "crypto";
 
 const COLLECTION_NAME = "products";
 const VECTOR_DIMENSION = 768; // Update if your model outputs a different size
 
 export const qdrant = new QdrantClient({
-  url: "http://localhost:6333",
+  url: process.env.QDRANT_URI || "http://localhost:6333",
 });
 
 export const initQdrantCollection = async (): Promise<void> => {
@@ -31,7 +31,6 @@ export const upsertVector = async (
   vector: number[],
   payload?: Record<string, any>
 ): Promise<void> => {
-  console.log(id);
   const point = {
     id,
     vector,
@@ -45,7 +44,7 @@ export const upsertVector = async (
 };
 
 export const upsertManyToQdrant = async (
-  products: Partial<ReferenceProduct>[]
+  products: Partial<ReferenceProductDocument>[]
 ) => {
   if (products.length === 0) return;
 

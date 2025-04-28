@@ -1,7 +1,7 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
-import Attribute from "../../models/Attribute";
 import "../../utils/bootstrap";
 import { retrieveUserId } from "../../services/UserService";
+import { getAttributes } from "../../services/AttributeService";
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
@@ -22,7 +22,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       },
     ];
 
-    const userAttributes = await Attribute.find({ userId }).lean();
+    const userAttributes = await getAttributes(userId);
     const responseBody = {
       attributes: defaultAttributes.concat(userAttributes),
     };

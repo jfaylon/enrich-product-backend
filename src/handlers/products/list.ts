@@ -1,9 +1,13 @@
 import { SortOrder } from "mongoose";
-import Product from "../../models/Product";
 import "../../utils/bootstrap";
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { retrieveUserId } from "../../services/UserService";
-import Attribute, { AttributeDocument } from "../../models/Attribute";
+import { AttributeDocument } from "../../models/Attribute";
+import {
+  countProductDocuments,
+  listProducts,
+} from "../../services/ProductService";
+import { getAttributes } from "../../services/AttributeService";
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
@@ -19,7 +23,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       string,
       string | { $regex: string; $options: string } | string[] | number
     > = { userId };
-    const userAttributesArray = await Attribute.find({ userId }).lean();
+    const userAttributesArray = await getAttributes(userId);
     const userAttributesObject: Record<string, Partial<AttributeDocument>> = {};
     userAttributesArray.map((attribute) => {
       userAttributesObject[attribute.name] = attribute;
@@ -34,7 +38,6 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
             userAttributesObject[key!]?.type!
           )
         ) {
-          console.log(key!);
           parsedFilter[`attributes.${key}`] = {
             $regex: `${filter[key]}`,
             $options: "i",
@@ -60,7 +63,6 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
         }
       }
     }
-    console.log(parsedFilter);
     const sortOrderNum = sortOrder === "desc" ? -1 : 1;
     const sort: Record<string, SortOrder> = {};
 
@@ -74,14 +76,13 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       sort["_id"] = 1;
     }
     const skip = (Number(page) - 1) * Number(limit);
-    console.log(sort);
-    const products = await Product.find(parsedFilter)
-      .collation({ locale: "en", strength: 2 })
-      .sort(sort)
-      .skip(skip)
-      .limit(Number(limit))
-      .lean();
-    const totalCount = await Product.countDocuments(parsedFilter);
+    const products = await listProducts(
+      parsedFilter,
+      sort,
+      skip,
+      Number(limit)
+    );
+    const totalCount = await countProductDocuments(parsedFilter);
 
     // Return the response with the products and pagination info
     return {
