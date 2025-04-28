@@ -141,8 +141,13 @@ npm run dev
 
 ## Architecture
 
+![Architecture Diagram](./screenshots/architecture.png)
 
+There are 3 major flows that are identified: User flow, Enrichment worker flow, and seeding flow.
 
+- The user flow is able to manage products and attributes, and sends a job to the queue for product enrichment
+- The enrichment worker flow performs the vector search, prompt generation, LLM query, and processing of results
+- The seeding flow adds reference products for possible similarities that can be used for better product enrichment.
 
 ---
 
