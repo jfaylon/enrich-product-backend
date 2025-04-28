@@ -310,6 +310,9 @@ This project is licensed under the MIT License.
 
 ## Testing
 
-- Basic unit tests have been implemented to validate core service functions such as product insertion, retrieval, and background processing. Current coverage primarily focuses on success paths and common edge cases. Planned expansions include broader coverage of failure scenarios, invalid inputs, and simulated service errors to further improve reliability and fault tolerance.
+### Unit Testing Coverage
+Basic unit tests have been implemented to validate core service functionalities such as product insertion, retrieval, and background processing. Current coverage focuses on critical success paths and common edge cases, forming a foundation for ensuring baseline functionality.
+
+Due to time constraints and the priority placed on achieving core system functionality, unit test coverage is currently in its initial phase. Planned expansions include broader validation of failure scenarios, invalid input handling, and simulated service errors to further enhance system reliability and fault tolerance.
 
 ---
