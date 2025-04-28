@@ -79,6 +79,28 @@ const serverlessConfiguration: AWS = {
       reservedConcurrency: 2,
       timeout: 900,
     },
+    getSwaggerHtml: {
+      handler: "src/handlers/swagger/swagger.handler",
+      events: [
+        {
+          httpApi: {
+            method: "get",
+            path: "/swagger",
+          },
+        },
+      ],
+    },
+    getSwaggerJson: {
+      handler: "src/handlers/swagger/swaggerJson.handler",
+      events: [
+        {
+          httpApi: {
+            method: "get",
+            path: "/swagger.json",
+          },
+        },
+      ],
+    },
   },
   resources: {
     Resources: {

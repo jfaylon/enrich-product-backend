@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "serverless.ts",
   "scripts": {
-    "dev": "nodemon --exec sls offline start",
+    "dev": " sls offline start",
     "test": "jest -runInBand --coverage",
     "migrate:new": "ts-node mongo-migrate-ts/cli.ts new -n",
     "migrate:up": "ts-node mongo-migrate-ts/cli.ts up"

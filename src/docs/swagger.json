@@ -1,0 +1,390 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Enrich Product Backend API",
+    "version": "1.0.0",
+    "description": "API documentation generated based on serverless.ts routes."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/dev",
+      "description": "Serverless Offline Local"
+    }
+  ],
+  "paths": {
+    "/products": {
+      "get": {
+        "summary": "List Products",
+        "description": "Returns a paginated list of products, sortable by any field, and allows dynamic filtering.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": { "type": "integer", "default": 1 },
+            "description": "Page number for pagination"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": { "type": "integer", "default": 10 },
+            "description": "Number of items per page"
+          },
+          {
+            "in": "query",
+            "name": "sortField",
+            "schema": { "type": "string", "default": "_id" },
+            "description": "Field name to sort by"
+          },
+          {
+            "in": "query",
+            "name": "sortOrder",
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"],
+              "default": "asc"
+            },
+            "description": "Sort order"
+          },
+          {
+            "in": "query",
+            "name": "filter",
+            "schema": { "type": "object" },
+            "description": "Dynamic filter based on product attributes (flexible)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of products returned"
+          }
+        }
+      },
+      "post": {
+        "summary": "Upload Products",
+        "description": "Uploads a CSV or XLSX file containing products to be processed.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "CSV or XLSX file containing products"
+                  }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File upload successful and queued for processing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid file upload or format."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Products",
+        "description": "Deletes multiple products by their IDs.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "productIds": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Array of product IDs to delete"
+                  }
+                },
+                "required": ["productIds"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Products deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Deleted 5 products"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Missing or invalid product IDs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Missing product IDs to delete"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Unauthorized user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attributes": {
+      "get": {
+        "summary": "Get Attributes",
+        "description": "Returns a list of default and user-defined attributes.",
+        "responses": {
+          "200": {
+            "description": "List of attributes retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "attributes": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Attribute"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error while fetching attributes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Failed to fetch attributes"
+                    },
+                    "detail": {
+                      "type": "string",
+                      "example": "Missing userId"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Attribute",
+        "description": "Creates a new custom attribute for products.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Attribute"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Attribute created successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          }
+        }
+      }
+    },
+    "/attributes/{attributeId}": {
+      "delete": {
+        "summary": "Delete Attribute",
+        "description": "Deletes a specific attribute by ID.",
+        "parameters": [
+          {
+            "name": "attributeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attribute deleted"
+          }
+        }
+      }
+    },
+    "/products/enrich": {
+      "post": {
+        "summary": "Enrich Products",
+        "description": "Triggers background enrichment for selected products by posting them to the enrichment queue.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "productIds": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Array of product IDs to enrich"
+                  }
+                },
+                "required": ["productIds"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Enrichment triggered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "example": {}
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error during enrichment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Enrich failed"
+                    },
+                    "detail": {
+                      "type": "string",
+                      "example": "No attributes to enrich. Please create an attribute"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Attribute": {
+        "type": "object",
+        "required": ["name", "label", "type"],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "ID of the user creating the attribute"
+          },
+          "name": {
+            "type": "string",
+            "description": "Unique attribute key"
+          },
+          "label": {
+            "type": "string",
+            "description": "Display label for the attribute"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "short_text",
+              "long_text",
+              "rich_text",
+              "number",
+              "single_select",
+              "multi_select",
+              "measure"
+            ],
+            "description": "Attribute type"
+          },
+          "options": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Options for select types"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit of measure (for measure type)"
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Whether attribute is required"
+          }
+        }
+      }
+    }
+  }
+}
