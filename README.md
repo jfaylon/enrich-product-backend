@@ -58,7 +58,7 @@ docker run -d --name mongodb \
 docker exec -it mongodb mongosh
 ```
 
-Inside:
+Inside the mongo shell, run the following commands:
 
 ```javascript
 rs.initiate();
@@ -116,10 +116,10 @@ Edit `.env` with your configuration values.
 10. **Run Migrations and Seed Data:**
 
 ```bash
-npm run migrate up
+npm run migrate:up
 ```
 
-11. **Start the Development Server:**
+11. **Start the Serverless offline simulation:**
 
 ```bash
 npm run dev
@@ -141,8 +141,13 @@ npm run dev
 
 ## Architecture
 
+![Architecture Diagram](./screenshots/architecture.png)
 
+There are 3 major flows that are identified: User flow, Enrichment worker flow, and seeding flow.
 
+- The user flow is able to manage products and attributes, and sends a job to the queue for product enrichment
+- The enrichment worker flow performs the vector search, prompt generation, LLM query, and processing of results
+- The seeding flow adds reference products for possible similarities that can be used for better product enrichment.
 
 ---
 
@@ -194,9 +199,11 @@ npm run dev
 
 ### NoSQL (MongoDB) vs SQL
 
-MongoDB was chosen over traditional SQL databases to handle flexible and evolving product schemas, including user-defined dynamic attributes. NoSQL's document model enables rapid iteration and efficient storage and query of nested, semi-structured data without predefined rigid schemas such as querying dynamic, user-generated attributes. Another thing, as number products increase, so thus the storage.
+MongoDB was selected over traditional SQL databases to handle flexible and evolving product schemas, particularly those involving user-defined dynamic attributes. The document-oriented model of MongoDB enables rapid iteration and efficient storage and querying of nested, semi-structured data without requiring rigid, predefined schemas. This flexibility is critical for supporting dynamic, user-generated attributes that can vary significantly between products.
 
-In terms of scaling, NoSQL is better at horizontally scaling while SQL is at vertical scaling. It may be easier to add new nodes to MongoDB than upgrade the storage of SQL (which may cause downtime when upgrading). Also, as a developer, there are available tools such as in-memory mongodb database that can be built-in the unit tests. In-memory SQL databases may have compatibility issues.
+In terms of scaling, NoSQL databases like MongoDB are inherently better suited for horizontal scaling, where new nodes can be added easily to expand storage and performance. In contrast, traditional SQL databases typically scale vertically, requiring larger, more powerful servers — a process that can involve significant downtime and infrastructure complexity when upgrading.
+
+From a development perspective, MongoDB also offers advantages such as in-memory database support (e.g., mongodb-memory-server), which enables lightweight, fast, and compatible unit tests without the need for external infrastructure. By contrast, while in-memory SQL databases exist, they can often introduce compatibility issues between testing and production environments.
 
 ### Polling vs WebSockets
 
@@ -269,6 +276,8 @@ For the sake of this test and local development efficiency, only 10,000 rows wer
 - Set up system monitoring tools (e.g., Prometheus, Grafana, Sentry) to observe API response times, database operations, and background processing metrics.
 - Finalize Serverless Framework configuration for production-ready cloud deployment (e.g., AWS Lambda, API Gateway).
 - Transition background task queue from ElasticMQ (local) to AWS SQS in production environments.
+- Expand the use of environment variables to allow easy customization of backend endpoints, feature toggles, deployment environment flags, and other configurations without requiring codebase changes. This will improve developer experience and production deployment flexibility.
+
 
 ---
 
@@ -303,6 +312,9 @@ This project is licensed under the MIT License.
 
 ## Testing
 
-- Basic unit tests have been implemented to validate core service functions such as product insertion, retrieval, and background processing. Current coverage primarily focuses on success paths and common edge cases. Planned expansions include broader coverage of failure scenarios, invalid inputs, and simulated service errors to further improve reliability and fault tolerance.
+### Unit Testing Coverage
+Basic unit tests have been implemented to validate core service functionalities such as product insertion, retrieval, and background processing. Current coverage focuses on critical success paths and common edge cases, forming a foundation for ensuring baseline functionality.
+
+Due to time constraints and the priority placed on achieving core system functionality, unit test coverage is currently in its initial phase. Planned expansions include broader validation of failure scenarios, invalid input handling, and simulated service errors to further enhance system reliability and fault tolerance.
 
 ---
