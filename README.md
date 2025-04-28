@@ -119,7 +119,7 @@ Edit `.env` with your configuration values.
 npm run migrate up
 ```
 
-11. **Start the Development Server:**
+11. **Start the Serverless offline simulation:**
 
 ```bash
 npm run dev
