@@ -43,17 +43,17 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
             $options: "i",
           };
         }
-        if (
+        else if (
           ["single_select", "multi_select"].includes(
             userAttributesObject[key!]?.type!
           )
         ) {
           parsedFilter[`attributes.${key}`] = filter[key].split(",");
         }
-        if (["measure"].includes(userAttributesObject[key!]?.type!)) {
+        else if (["measure"].includes(userAttributesObject[key!]?.type!)) {
           parsedFilter[`attributes.${key}.value`] = Number(filter[key]);
         }
-        if (["barcode"].includes(key)) {
+        else if (["barcode"].includes(key)) {
           parsedFilter[key] = filter[key];
         } else {
           parsedFilter[key] = {
@@ -76,6 +76,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       sort["_id"] = 1;
     }
     const skip = (Number(page) - 1) * Number(limit);
+    console.log(parsedFilter);
+    console.log(sort);
     const products = await listProducts(
       parsedFilter,
       sort,
