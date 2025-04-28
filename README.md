@@ -58,7 +58,7 @@ docker run -d --name mongodb \
 docker exec -it mongodb mongosh
 ```
 
-Inside:
+Inside the mongo shell, run the following commands:
 
 ```javascript
 rs.initiate();
