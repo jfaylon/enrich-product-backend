@@ -10,6 +10,7 @@
 - [Tech Stack](#tech-stack)
 - [Installation](#installation)
 - [Features](#features)
+- [Architecture](#architecture)
 - [Project Structure](#project-structure)
 - [API Documentation](#api-documentation)
 - [Technical Decisions and Tradeoffs](#technical-decisions-and-tradeoffs)
@@ -138,6 +139,13 @@ npm run dev
 
 ---
 
+## Architecture
+
+
+
+
+---
+
 ## Project Structure
 
 ```bash
@@ -186,7 +194,9 @@ npm run dev
 
 ### NoSQL (MongoDB) vs SQL
 
-MongoDB was chosen over traditional SQL databases to handle flexible and evolving product schemas, including user-defined dynamic attributes. NoSQL's document model enables rapid iteration and efficient storage of nested, semi-structured data without predefined rigid schemas.
+MongoDB was chosen over traditional SQL databases to handle flexible and evolving product schemas, including user-defined dynamic attributes. NoSQL's document model enables rapid iteration and efficient storage and query of nested, semi-structured data without predefined rigid schemas such as querying dynamic, user-generated attributes. Another thing, as number products increase, so thus the storage.
+
+In terms of scaling, NoSQL is better at horizontally scaling while SQL is at vertical scaling. It may be easier to add new nodes to MongoDB than upgrade the storage of SQL (which may cause downtime when upgrading). Also, as a developer, there are available tools such as in-memory mongodb database that can be built-in the unit tests. In-memory SQL databases may have compatibility issues.
 
 ### Polling vs WebSockets
 
