@@ -141,20 +141,20 @@ npm run dev
 ## Project Structure
 
 ```bash
-/assets
-/seeds
+/assets             # Sample assets like CSV/XLSX files for uploads
+/seeds              # Seed data files for initializing collections (e.g., ReferenceProducts)
 /mongo-migrate-ts
-  /migrations
+  /migrations       # MongoDB migration and seed scripts
 /src
-  /handlers
-  /interfaces
-  /llms     
-  /mappers
-  /models
-  /public
-  /services        
-  /utils
-/test
+  /handlers         # Lambda handlers (API entry points)
+  /interfaces       # TypeScript interfaces and shared types
+  /llms             # LLM service logic (e.g., Ollama adapters)
+  /mappers          # Data mappers to normalize external sources
+  /models           # MongoDB Mongoose schemas
+  /public           # Static public files (e.g., Swagger UI)
+  /services         # Core business logic (e.g., ProductService, AttributeService)
+  /utils            # Shared utility functions (e.g., logging, retry logic)
+/test               # Unit tests and test utilities
 ```
 
 ---
@@ -163,6 +163,22 @@ npm run dev
 
 - When the serverless framwork is running, it can be viewed at this [http://localhost:3000/swagger](http://localhost:3000/swagger)
 - Note: port 3000 is the default port. Please confirm what port have you set it up with
+
+- Here is a concise table of API calls
+
+## API Documentation
+
+| Method | Endpoint                                              | Notes                                  |
+|:-------|:------------------------------------------------------|:---------------------------------------|
+| POST   | http://localhost:3000/products                        | Upload products (CSV/XLSX)             |
+| POST   | http://localhost:3000/products/enrich                 | Trigger enrichment for selected products |
+| GET    | http://localhost:3000/products                        | List products with filtering/sorting  |
+| DELETE | http://localhost:3000/products                        | Delete selected products              |
+| GET    | http://localhost:3000/attributes                      | List attributes                       |
+| POST   | http://localhost:3000/attributes                      | Create a new attribute                |
+| DELETE | http://localhost:3000/attributes/{attributeId}        | Delete an attribute                   |
+| GET    | http://localhost:3000/swagger                         | Swagger UI HTML page                  |
+| GET    | http://localhost:3000/swagger.json                    | Raw Swagger JSON spec                 |
 
 ---
 
