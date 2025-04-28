@@ -192,13 +192,34 @@ MongoDB was chosen over traditional SQL databases to handle flexible and evolvin
 
 Polling was initially chosen over WebSocket-based updates for background enrichment jobs to keep the system simpler and more resilient to scale. Polling allows easier load distribution across serverless deployments and is more tolerant of client network inconsistencies compared to maintaining long-lived WebSocket connections.
 
-### Serverless Architecture vs Monolithic Backend
+### Serverless Architecture vs Kubernetes vs Monolithic Backend
 
-The project adopts a modular serverless-compatible backend design to support horizontal scalability and easy deployment of individual functions or services. This approach improves flexibility for future feature expansion while minimizing downtime during deployments.
+The project adopts a **modular serverless-compatible backend design**, aligned with the take-home requirements favoring a serverless approach.  
+This enables independent deployment of functions, automatic scaling, and minimizes infrastructure management overhead.
+
+However, alternative architectures such as Kubernetes orchestration or Monolithic hosting were also considered, and each comes with tradeoffs across different operational dimensions.
+
+| Architecture | Pros | Cons |
+|:---|:---|:---|
+| **Serverless (chosen)** | Lower infrastructure costs at small-to-medium scale. Automatic scaling to demand. Minimal server management. Fast deployment cycles. | Cold starts (for some functions). Harder to optimize performance for long-running processes. |
+| **Kubernetes** | Highly customizable scaling and networking. Fine-grained performance control. Good for complex microservices or high-traffic applications. | High operational complexity (cluster management, monitoring, autoscaling). Higher cost at small scale. Slower initial setup. |
+| **Monolithic Backend** | Simplest to set up and reason about initially. Fewer moving parts. Good for small teams or MVPs. | Poor scalability. Risk of downtime during deployments. Harder to evolve as the system grows. Single point of failure. |
+
+#### Summary of Architectural Choice
+
+- **Serverless architecture** was chosen to align with the take-home preference, offering fast scalability, cost efficiency, and low operational overhead during early stages of the project.
+- **Kubernetes orchestration** is a strong candidate for future evolution if traffic becomes highly variable, multi-region scaling is needed, or performance tuning across services becomes critical.
+- **Monolithic backend** approaches, while faster for prototypes, were not selected due to limitations in scaling, deployment flexibility, and maintainability over time.
+
+#### Personal Note
+
+- I like that you can simulate AWS modules in serverless-offline. I was able to architect the solution using AWS components such as SQS and Lambda.
+
+
 
 ### Local Vector Search vs Managed Solutions
 
-Qdrant was chosen for local vector search to provide full control over vector storage, similarity tuning, and cost optimization, avoiding reliance on managed cloud vector databases during initial development.
+Qdrant was chosen for local vector search to provide full control over vector storage, similarity tuning, and cost optimization, avoiding reliance on managed cloud vector databases during initial development. The downside of this is the data is stored locally and limited by the local system's capacity. For this test, I feel this is sufficient and this can be refactored to support cloud-based solutions
 
 ---
 
