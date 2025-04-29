@@ -293,6 +293,9 @@ For the sake of this test and local development efficiency, only 10,000 rows wer
 - Transition background task queue from ElasticMQ (local) to AWS SQS in production environments.
 - Expand the use of environment variables to allow easy customization of backend endpoints, feature toggles, deployment environment flags, and other configurations without requiring codebase changes. This will improve developer experience and production deployment flexibility.
 - Introduce file size validation when users upload CSV/XLSX files. Given the constraints of serverless architectures (such as Lambda timeout and memory limits), enforcing an upload size limit will help prevent timeout errors during product parsing and processing, and will enhance system stability at scale.
+- Enhance the backend enrichment process to allow users to specify which product fields (attributes) should be enriched.  
+  This would optimize processing time and reduce unnecessary LLM resource usage by targeting only the fields that the user deems important for a given enrichment job.
+
 
 
 ---
