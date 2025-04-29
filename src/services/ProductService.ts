@@ -31,7 +31,11 @@ export const getProductDocuments = async (
 export const listProducts = async (
   filter: Record<
     string,
-    string | { $regex: string; $options: string } | string[] | number
+    | string
+    | { $regex: string; $options: string }
+    | { $in: string[] }
+    | string[]
+    | number
   >,
   sort: Record<string, SortOrder>,
   skip: number,
@@ -48,7 +52,11 @@ export const listProducts = async (
 export const countProductDocuments = async (
   filter: Record<
     string,
-    string | { $regex: string; $options: string } | string[] | number
+    | string
+    | { $regex: string; $options: string }
+    | { $in: string[] }
+    | string[]
+    | number
   >
 ) => {
   return await Product.countDocuments(filter);

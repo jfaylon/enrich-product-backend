@@ -21,17 +21,30 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     } = event.queryStringParameters || {};
     const parsedFilter: Record<
       string,
-      string | { $regex: string; $options: string } | string[] | number
+      | string
+      | { $regex: string; $options: string }
+      | { $in: string[] }
+      | string[]
+      | number
     > = { userId };
     const userAttributesArray = await getAttributes(userId);
     const userAttributesObject: Record<string, Partial<AttributeDocument>> = {};
     userAttributesArray.map((attribute) => {
       userAttributesObject[attribute.name] = attribute;
     });
+
+    const preprocesedFilter: Record<string, string> = {};
     for (const key in filter) {
+      if (key.endsWith("[]")) {
+        preprocesedFilter[key.slice(0, -2)] = filter[key]!;
+      } else {
+        preprocesedFilter[key] = filter[key]!;
+      }
+    }
+    for (const key in preprocesedFilter) {
       if (
         !["page", "limit", "sortField", "sortOrder"].includes(key) &&
-        filter[key]
+        preprocesedFilter[key]
       ) {
         if (
           ["short_text", "long_text", "rich_text"].includes(
@@ -43,15 +56,19 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
             $options: "i",
           };
         } else if (
-          ["single_select", "multi_select"].includes(
-            userAttributesObject[key!]?.type!
-          )
+          ["single_select"].includes(userAttributesObject[key!]?.type!)
         ) {
-          parsedFilter[`attributes.${key}`] = filter[key].split(",");
+          parsedFilter[`attributes.${key}`] = preprocesedFilter[key];
+        } else if (
+          ["multi_select"].includes(userAttributesObject[key!]?.type!)
+        ) {
+          parsedFilter[`attributes.${key}`] = {
+            $in: preprocesedFilter[key].split(","),
+          };
         } else if (["measure"].includes(userAttributesObject[key!]?.type!)) {
           parsedFilter[`attributes.${key}.value`] = Number(filter[key]);
         } else if (["barcode"].includes(key)) {
-          parsedFilter[key] = filter[key];
+          parsedFilter[key] = filter[key]!;
         } else {
           parsedFilter[key] = {
             $regex: `${filter[key]}`,

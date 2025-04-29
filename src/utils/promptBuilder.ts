@@ -87,7 +87,7 @@ const buildFieldsFromAttributes = (attributes: AttributeDocument[]): string => {
         case "multi_select":
           return `- ${label} (select multiple: ${
             attr.options?.join(", ") || "no options"
-          })`;
+          }). Select only from the following options exactly. Do not invent or guess new options. Return only valid selections.`;
         case "measure":
           return `- ${label} (measure in ${
             attr.unit || "unit"
@@ -190,6 +190,7 @@ Important Rules:
 - Do not return values like "0.5 kg" as a string — split into { value: 0.5, unit: "kg" }.
 - When outputting a "measure" field, always output an object containing BOTH value (number) and unit (string). Even if the unit is missing, still include the unit field as an empty string. Example: { \"value\": 42, \"unit\": \"kg\" } or { \"value\": 5, \"unit\": \"\" }. Never omit the unit field. Always use the unit provided.
 - Only respond with a valid JSON object, and nothing else.
+- When outputt
 
 Simple Field Extraction Rules:
 - For attributes with short texts as such as color, material, brand, flavor, size, and similar fields, only extract and return the short value (word or phrase).
