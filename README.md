@@ -15,6 +15,7 @@
 - [API Documentation](#api-documentation)
 - [Technical Decisions and Tradeoffs](#technical-decisions-and-tradeoffs)
 - [Technical Limitations](#technical-limitations)
+- [Assumptions](#assumptions)
 - [Learnings](#learnings)
 - [Future Enhancements](#future-enhancements)
 - [Data Sources](#data-sources)
@@ -256,6 +257,22 @@ For the sake of this test and local development efficiency, only 10,000 rows wer
 
 ---
 
+## Assumptions
+
+## Assumptions
+
+- **Attribute Management Scope**:  
+  Only **Create** and **Delete** operations are implemented for product attributes.  
+  Editing attributes (e.g., renaming an attribute or modifying selectable options) was deliberately avoided to prevent potential inconsistencies or corruption in existing product data, which may already reference the original attribute schema.
+
+- **Table Selection Behavior**:  
+  A "Select All" feature is not implemented in the current table UI.  
+  It was unclear whether "Select All" should apply only to the current page of results or to **all products matching the filter criteria** across pages.  
+  To avoid ambiguity and unintended mass actions, this functionality was deferred for further clarification during future design iterations.
+
+
+---
+
 ## Learnings
 
 - Transitioned from designing server-based monolithic architectures to adopting a serverless-compatible modular design.
@@ -277,6 +294,7 @@ For the sake of this test and local development efficiency, only 10,000 rows wer
 - Finalize Serverless Framework configuration for production-ready cloud deployment (e.g., AWS Lambda, API Gateway).
 - Transition background task queue from ElasticMQ (local) to AWS SQS in production environments.
 - Expand the use of environment variables to allow easy customization of backend endpoints, feature toggles, deployment environment flags, and other configurations without requiring codebase changes. This will improve developer experience and production deployment flexibility.
+- Introduce file size validation when users upload CSV/XLSX files. Given the constraints of serverless architectures (such as Lambda timeout and memory limits), enforcing an upload size limit will help prevent timeout errors during product parsing and processing, and will enhance system stability at scale.
 
 
 ---
