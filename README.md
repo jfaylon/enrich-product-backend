@@ -259,8 +259,6 @@ For the sake of this test and local development efficiency, only 10,000 rows wer
 
 ## Assumptions
 
-## Assumptions
-
 - **Attribute Management Scope**:  
   Only **Create** and **Delete** operations are implemented for product attributes.  
   Editing attributes (e.g., renaming an attribute or modifying selectable options) was deliberately avoided to prevent potential inconsistencies or corruption in existing product data, which may already reference the original attribute schema.
